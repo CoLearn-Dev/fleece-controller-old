@@ -61,7 +61,7 @@ def send_request_to_worker(db_task: models.Task, db_worker: models.Worker, plan)
         "task_id": db_task.t_id,
         "is_new_task": True,
         "plan": plan,
-        "payload": prompt_tokens
+        "payload": [prompt_tokens]
     }
     logger.info(f"--> Request to {db_worker.worker_url}, JSON: " + json.dumps(request_json))
     request = requests.post(
@@ -83,9 +83,12 @@ def schedule(db_task: models.Task):
         return random.choice(all_workers)
     db_worker = randomly_choose_worker()
     # TODO: support other models
-    plan = [(db_worker.worker_url, "llama-2-7b-chat.embedding")] + \
-        [(db_worker.worker_url, f"llama-2-7b-chat.transformerblock-{l}") for l in range(32)] + \
-        [(db_worker.worker_url, "llama-2-7b-chat.output")]
+    plan = [(db_worker.worker_url, [
+        "llama-2-7b-chat-slice/tok_embeddings",
+        *[f"llama-2-7b-chat-slice/layers.{i}" for i in range(32)],
+        "llama-2-7b-chat-slice/norm",
+        "llama-2-7b-chat-slice/output",
+    ])]
     db_task.status = "scheduled"
     db.commit()
     db.refresh(db_task)

@@ -71,6 +71,7 @@ class ChatCompletionStreamResponse(BaseModel):
 
 class TaskUpdate(BaseModel):
     t_id: str
-    status: Optional[str]
-    output_token: Optional[int]
-    stat: dict
+    # TODO: shall we add next token index here? (probably also changes forward-calling procedure)
+    status: str = None
+    output_token: Optional[List[int]] = None
+    stat: dict = {}

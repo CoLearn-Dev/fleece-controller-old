@@ -5,6 +5,9 @@ openai_secret.py
 # File generated from running the command
 state.sqlite
 
+# Example file for dev purpose
+example.json
+
 # BELOW ARE STANDARD PYTHON IGNORES: https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
 
 # Byte-compiled / optimized / DLL files
