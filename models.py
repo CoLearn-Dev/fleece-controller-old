@@ -9,7 +9,7 @@ class ChatSession(Base):
     c_id = Column(String, primary_key=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     status = Column(String, index=True)
-
+    
     # llm-related
     # https://platform.openai.com/docs/api-reference/completions/create
     stream = Column(Boolean, index=True)
@@ -21,21 +21,24 @@ class Task(Base):
     __tablename__ = "tasks"
     t_id = Column(String, primary_key=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), index=True)
     status = Column(String, index=True)
     from_c_id = Column(String, ForeignKey("chatsessions.c_id"), index=True)
     plan = Column(String)
+    plan_step_num = Column(Integer, index=True)
+    plan_current_step = Column(Integer, index=True)
+    plan_current_round = Column(Integer, index=True)
 
     from_c = relationship("ChatSession", foreign_keys=[from_c_id])
 
 class TaskProgress(Base):
     __tablename__ = "taskprogress"
     p_id = Column(String, primary_key=True, index=True)
+    from_w_id = Column(String, ForeignKey("workers.w_id"), index=True)
     from_t_id = Column(String, ForeignKey("tasks.t_id"), index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-    index = Column(Integer, index=True)
-    delta = Column(String)
-    finish_reason = Column(String, index=True)
+    reported_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
+    from_w = relationship("Worker", foreign_keys=[from_w_id])
     from_t = relationship("Task", foreign_keys=[from_t_id])
 
 class Worker(Base):

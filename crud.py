@@ -37,6 +37,14 @@ def create_chat_session(db: Session, chat_session: schemas.ChatCompletionRequest
     db.refresh(db_chat_session)
     return db_chat_session
 
-def process_task_update(db: Session, w_id: str, task_update: schemas.TaskUpdate):
-    logger.info(f"Processing task update from worker {w_id}: {task_update}")
-    # TODO
+def create_task_progress(db: Session, w_id: str, task_update: schemas.TaskUpdate):
+    logger.debug(f"Processing task update from worker {w_id}: {task_update}")
+    db_task_progress = models.TaskProgress(
+        p_id=uuid4().hex,
+        from_w_id=w_id,
+        from_t_id=task_update.t_id,
+    )
+    db.add(db_task_progress)
+    db.commit()
+    db.refresh(db_task_progress)
+    return db_task_progress

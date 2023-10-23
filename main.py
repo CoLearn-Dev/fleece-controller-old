@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import multiprocessing
-from typing import Annotated, AsyncGenerator
+from typing import Annotated, AsyncGenerator, Dict
 from datetime import datetime, timedelta
 from fastapi import Depends, FastAPI, HTTPException, Header, Request
 from fastapi.responses import StreamingResponse
@@ -14,7 +14,10 @@ from database import SessionLocal
 import models, schemas, crud
 from scheduler import start_scheduler
 
-enc = tiktoken.get_encoding("cl100k_base")
+from llama.tokenizer import Tokenizer  # LATER: move to a separate file
+llama_enc = Tokenizer("./llama/tokenizer.model")
+openai_enc = tiktoken.get_encoding("cl100k_base")
+
 app = FastAPI()
 
 # Scheduler Process
@@ -55,27 +58,41 @@ def register_worker(worker: schemas.WorkerRegister, db: Session = Depends(get_db
 def deregister_worker(w_id: Annotated[str, Depends(get_current_worker_id)], db: Session = Depends(get_db)):
     crud.deregister_worker(db, w_id)
 
+receiver_queues: Dict[str, asyncio.Queue] = {}
+
 def build_chat_session_receiver(db_chat_session: models.ChatSession) -> AsyncGenerator[schemas.ChatCompletionResponseStreamChoice, None]:
-    dummy_model_output = f"This is the dummy output for t_id={db_chat_session.c_id}."
-    tokenized = enc.encode(dummy_model_output)
+    q = receiver_queues[db_chat_session.c_id] = asyncio.Queue()
+    assert db_chat_session.model.startswith("llama-2-"), f"Model {db_chat_session.model} is not supported."
     async def ret():
         for i in range(db_chat_session.n):
             yield schemas.ChatCompletionResponseStreamChoice(
                 index=i,
                 delta=schemas.DeltaMessage(role="assistant"),
             )
-            for t in tokenized:
-                await asyncio.sleep(0.1)
+        while True:
+            fullfilled = [False] * db_chat_session.n
+            output_tokens = await q.get()  # TODO: check if there are ordering issues
+            for i, t in enumerate(output_tokens):
+                if fullfilled[i]:
+                    continue
                 yield schemas.ChatCompletionResponseStreamChoice(
                     index=i,
-                    delta=schemas.DeltaMessage(content=enc.decode([t])),
+                    delta=schemas.DeltaMessage(content=llama_enc.decode([t])),
                     finish_reason=None,
                 )
-            yield schemas.ChatCompletionResponseStreamChoice(
-                index=i,
-                finish_reason="stop",
-            )
+                if t == llama_enc.eos_id:
+                    fullfilled[i] = True
+                    yield schemas.ChatCompletionResponseStreamChoice(
+                        index=i,
+                        finish_reason="stop",
+                    )
+            q.task_done()
+            # TODO: update db
+            if all(fullfilled):
+                receiver_queues.pop(db_chat_session.c_id)
+                break
     return ret()
+
 
 def terminate_chat_session(db_chat_session: models.ChatSession):
     raise NotImplementedError  # TODO
@@ -119,11 +136,17 @@ async def chat_completions(
                 raise HTTPException(status_code=400, detail="Client disconnected.")  # TODO: is this necessary?
             indexed_delta_contents[c.index].append(c.delta.content if c.delta.content is not None else "")
             indexed_finish_reason[c.index] = c.finish_reason
-        prompt_tokens = sum(len(enc.encode(m.content)) for m in request.messages)
+        prompt_tokens = sum(len(openai_enc.encode(m.content)) for m in request.messages)
+        # FIXME: align usage counting for different models
         completion_tokens = sum(
             len(delta_contents) - 2  # subtract 2 for the first role delta and last finish delta
             for delta_contents in indexed_delta_contents
         )
+        def combine_tokens(delta_contents):
+            # FIXME: there is still problem with the whitespace
+            assert response_model.startswith("llama-2-"), f"Model {response_model} is not supported."
+            print("delta_content", delta_contents)
+            return llama_enc.decode(sum([llama_enc.encode(dc, False, False) for dc in delta_contents if dc], []))
         return schemas.ChatCompletionResponse(
             id=response_id,
             created=response_created,
@@ -131,7 +154,7 @@ async def chat_completions(
             choices=[
                 schemas.ChatCompletionResponseChoice(
                     index=i,
-                    message=schemas.ChatMessage(role="assistant", content=''.join(delta_contents)),
+                    message=schemas.ChatMessage(role="assistant", content=combine_tokens(delta_contents)),
                     finish_reason=finish_reason,
                 )
                 for i, (delta_contents, finish_reason) in enumerate(zip(indexed_delta_contents, indexed_finish_reason))
@@ -145,7 +168,11 @@ async def chat_completions(
 
 @app.post("/update_task/")
 def update_task(task_update: schemas.TaskUpdate, w_id: Annotated[str, Depends(get_current_worker_id)], db: Session = Depends(get_db)):
-    crud.process_task_update(db, w_id, task_update)
+    db_task_progress = crud.create_task_progress(db, w_id, task_update)
+    # TODO check output_status to see if any errs
+    if task_update.output_tokens:
+        receiver_queues[db_task_progress.from_t.from_c_id].put_nowait(task_update.output_tokens)
+    
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

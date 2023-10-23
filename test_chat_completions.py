@@ -26,7 +26,7 @@ def main():
     input("[Test non-streaming mode] Press enter to continue...")
     completion = openai.ChatCompletion.create(
         messages=[{"role": "user", "content": "Tell me a joke."}],
-        model="gpt-3.5-turbo",
+        model=MODEL,
         api_base=API_BASE,
         api_key=API_KEY,
     )

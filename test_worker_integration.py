@@ -31,22 +31,19 @@ def mock_plan_executor(q, access_token):
         my_plan = forward_req.plan[0]
         assert random_url_suffix in my_plan[0], f"url_suffix does not match: '{random_url_suffix}' not in '{my_plan[0]}'"
         output_s = f"From dummy worker: generating output for task_id={forward_req.task_id}."
-        for token in enc.encode(output_s, bos=False, eos=True):
+        for i, token in enumerate(enc.encode(output_s, bos=False, eos=True)):
             time.sleep(random.randint(5, 10) / 100.)
-            for layer in my_plan[1]:
-                time.sleep(random.randint(5, 10) / 100.)
-                response = requests.post(
-                    f"{server_url}/update_task/",
-                    headers={"worker-token": f"{access_token.value.decode()}"},
-                    json={
-                        "t_id": forward_req.task_id,
-                        "stat": {
-                            "updated_layer": layer,
-                        },
-                        "output_token": [token] if layer == my_plan[1][-1] else None,
-                    }
-                )
-                print(f"-- update_task-response received: ", response.json())
+            response = requests.post(
+                f"{server_url}/update_task/",
+                headers={"worker-token": f"{access_token.value.decode()}"},
+                json={
+                    "t_id": forward_req.task_id,
+                    "plan_current_step": 0,
+                    "plan_current_round": i,
+                    "output_tokens": [token],
+                }
+            )
+            print(f"-- update_task-response received: ", response.json())
 
 Q = multiprocessing.Queue()
 P = multiprocessing.Process(target=mock_plan_executor, args=(Q, access_token))

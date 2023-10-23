@@ -96,6 +96,9 @@ def schedule(db_chat_session: models.ChatSession):
         status="created", 
         from_c_id=db_chat_session.c_id,
         plan=json.dumps(plan),
+        plan_step_num=len(plan),
+        plan_current_step=-1,
+        plan_current_round=0,
     )
     db.add(db_task)
     db.commit()
