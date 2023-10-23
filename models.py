@@ -4,18 +4,28 @@ from sqlalchemy.orm import relationship
 
 from database import Base, engine
 
-class Task(Base):
-    __tablename__ = "tasks"
-    # task metadata
-    t_id = Column(String, primary_key=True, index=True)
-    stream = Column(Boolean, index=True)
+class ChatSession(Base):
+    __tablename__ = "chatsessions"
+    c_id = Column(String, primary_key=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     status = Column(String, index=True)
+
     # llm-related
     # https://platform.openai.com/docs/api-reference/completions/create
+    stream = Column(Boolean, index=True)
     model = Column(String, index=True)
     messages = Column(String)
     n = Column(Integer, index=True)
+
+class Task(Base):
+    __tablename__ = "tasks"
+    t_id = Column(String, primary_key=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    status = Column(String, index=True)
+    from_c_id = Column(String, ForeignKey("chatsessions.c_id"), index=True)
+    plan = Column(String)
+
+    from_c = relationship("ChatSession", foreign_keys=[from_c_id])
 
 class TaskProgress(Base):
     __tablename__ = "taskprogress"

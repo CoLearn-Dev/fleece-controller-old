@@ -55,11 +55,11 @@ def register_worker(worker: schemas.WorkerRegister, db: Session = Depends(get_db
 def deregister_worker(w_id: Annotated[str, Depends(get_current_worker_id)], db: Session = Depends(get_db)):
     crud.deregister_worker(db, w_id)
 
-def build_task_output_receiver(db_task: models.Task) -> AsyncGenerator[schemas.ChatCompletionResponseStreamChoice, None]:
-    dummy_model_output = f"This is the dummy output for t_id={db_task.t_id}."
+def build_chat_session_receiver(db_chat_session: models.ChatSession) -> AsyncGenerator[schemas.ChatCompletionResponseStreamChoice, None]:
+    dummy_model_output = f"This is the dummy output for t_id={db_chat_session.c_id}."
     tokenized = enc.encode(dummy_model_output)
     async def ret():
-        for i in range(db_task.n):
+        for i in range(db_chat_session.n):
             yield schemas.ChatCompletionResponseStreamChoice(
                 index=i,
                 delta=schemas.DeltaMessage(role="assistant"),
@@ -77,7 +77,7 @@ def build_task_output_receiver(db_task: models.Task) -> AsyncGenerator[schemas.C
             )
     return ret()
 
-def terminate_task(db_task: models.Task):
+def terminate_chat_session(db_chat_session: models.ChatSession):
     raise NotImplementedError  # TODO
 
 @app.post("/v1/chat/completions")
@@ -88,13 +88,13 @@ async def chat_completions(
     db: Session = Depends(get_db),
 ):
     # ref: https://platform.openai.com/docs/api-reference/chat
-    db_task = crud.create_task(db, request)
+    db_chat_session = crud.create_chat_session(db, request)
     # Inform scheduler
-    scheduler_q.put(db_task.t_id)
-    response_id = db_task.t_id
-    response_created = round(db_task.created_at.timestamp())
+    scheduler_q.put(db_chat_session.c_id)
+    response_id = db_chat_session.c_id
+    response_created = round(db_chat_session.created_at.timestamp())
     response_model = request.model
-    response_generator = build_task_output_receiver(db_task)
+    response_generator = build_chat_session_receiver(db_chat_session)
     if request.stream:
         async def completion_stream_generator() -> AsyncGenerator[str, None]:
             async for c in response_generator:
@@ -111,11 +111,11 @@ async def chat_completions(
             media_type="text/event-stream",
         )
     else:
-        indexed_delta_contents = [[] for _ in range(db_task.n)]
-        indexed_finish_reason = [None for _ in range(db_task.n)]
+        indexed_delta_contents = [[] for _ in range(db_chat_session.n)]
+        indexed_finish_reason = [None for _ in range(db_chat_session.n)]
         async for c in response_generator:
             if await raw_request.is_disconnected():
-                terminate_task(db_task)
+                terminate_chat_session(db_chat_session)
                 raise HTTPException(status_code=400, detail="Client disconnected.")  # TODO: is this necessary?
             indexed_delta_contents[c.index].append(c.delta.content if c.delta.content is not None else "")
             indexed_finish_reason[c.index] = c.finish_reason

@@ -23,19 +23,20 @@ def deregister_worker(db: Session, w_id: str):
     db.commit()
     return db_worker
 
-def create_task(db: Session, task: schemas.ChatCompletionRequest) -> models.Task:
-    db_task = models.Task(
-        t_id=uuid4().hex,
-        model=task.model,
-        n=task.n,
-        stream=task.stream,
-        messages=task.messages.model_dump_json(),
+def create_chat_session(db: Session, chat_session: schemas.ChatCompletionRequest) -> models.ChatSession:
+    db_chat_session = models.ChatSession(
+        c_id=uuid4().hex,
         status="pending",
+        stream=chat_session.stream,
+        model=chat_session.model,
+        messages=chat_session.messages.model_dump_json(),
+        n=chat_session.n,
     )
-    db.add(db_task)
+    db.add(db_chat_session)
     db.commit()
-    db.refresh(db_task)
-    return db_task
+    db.refresh(db_chat_session)
+    return db_chat_session
 
 def process_task_update(db: Session, w_id: str, task_update: schemas.TaskUpdate):
     logger.info(f"Processing task update from worker {w_id}: {task_update}")
+    # TODO
