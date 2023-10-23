@@ -7,7 +7,6 @@ class WorkerRegister(BaseModel):
 
 class WorkerToken(BaseModel):
     access_token: str
-    token_type: str
 
 class ChatMessage(BaseModel):
     role: str

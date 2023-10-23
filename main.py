@@ -49,7 +49,7 @@ def get_current_worker_id(worker_token: Annotated[str, Header()]):
 @app.post("/register_worker/", response_model=schemas.WorkerToken)
 def register_worker(worker: schemas.WorkerRegister, db: Session = Depends(get_db)):
     db_worker = crud.register_worker(db, worker.worker_url)
-    return schemas.WorkerToken(access_token=create_access_token({"sub": db_worker.w_id}), token_type="bearer")
+    return schemas.WorkerToken(access_token=create_access_token({"sub": db_worker.w_id}))
 
 @app.post("/deregister_worker/")
 def deregister_worker(w_id: Annotated[str, Depends(get_current_worker_id)], db: Session = Depends(get_db)):
