@@ -49,12 +49,12 @@ def get_current_worker_id(worker_token: Annotated[str, Header()]):
         raise HTTPException(status_code=403, detail="Invalid authentication credentials. JWT Error.")
     return w_id
 
-@app.post("/register_worker/", response_model=schemas.WorkerToken)
+@app.post("/register_worker", response_model=schemas.WorkerToken)
 def register_worker(worker: schemas.WorkerRegister, db: Session = Depends(get_db)):
     db_worker = crud.register_worker(db, worker.worker_url)
     return schemas.WorkerToken(access_token=create_access_token({"sub": db_worker.w_id}))
 
-@app.post("/deregister_worker/")
+@app.post("/deregister_worker")
 def deregister_worker(w_id: Annotated[str, Depends(get_current_worker_id)], db: Session = Depends(get_db)):
     crud.deregister_worker(db, w_id)
 
@@ -165,7 +165,7 @@ async def chat_completions(
             ),
         )
 
-@app.post("/update_task/")
+@app.post("/update_task")
 def update_task(task_update: schemas.TaskUpdate, w_id: Annotated[str, Depends(get_current_worker_id)], db: Session = Depends(get_db)):
     db_task_progress = crud.create_task_progress(db, w_id, task_update)
     # TODO check output_status to see if any errs

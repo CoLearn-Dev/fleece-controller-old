@@ -34,7 +34,7 @@ def mock_plan_executor(q, access_token):
         for i, token in enumerate(enc.encode(output_s, bos=False, eos=True)):
             time.sleep(random.randint(5, 10) / 100.)
             response = requests.post(
-                f"{server_url}/update_task/",
+                f"{server_url}/update_task",
                 headers={"worker-token": f"{access_token.value.decode()}"},
                 json={
                     "t_id": forward_req.task_id,
@@ -66,7 +66,7 @@ f"""  "worker_url": "http://127.0.0.1:8001/{random_url_suffix}" }}'
 Would you like to automatically register the worker? [y]/n: """)
     if c == "" or c == "y":
         response = requests.post(
-            f"{server_url}/register_worker/",
+            f"{server_url}/register_worker",
             json={"worker_url": f"http://127.0.0.1:8001/{random_url_suffix}"}
         )
         print("Worker registered: ", response.json())
