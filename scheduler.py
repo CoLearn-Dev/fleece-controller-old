@@ -62,6 +62,8 @@ def send_request_to_worker(db_task: models.Task, db_worker: models.Worker):
         "task_id": db_task.t_id,
         "is_new_task": True,
         "plan": plan,
+        "step": 0,
+        "round": 0,
         "payload": [prompt_tokens]
     }
     logger.info(f"--> Request to {db_worker.worker_url}, JSON: " + json.dumps(request_json))
