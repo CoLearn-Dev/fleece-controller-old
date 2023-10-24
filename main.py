@@ -77,7 +77,7 @@ def build_chat_session_receiver(db_chat_session: models.ChatSession) -> AsyncGen
                     continue
                 yield schemas.ChatCompletionResponseStreamChoice(
                     index=i,
-                    delta=schemas.DeltaMessage(content=llama_enc.decode([t])),
+                    delta=schemas.DeltaMessage(content=llama_enc.sp_model.id_to_piece(t)),
                     finish_reason=None,
                 )
                 if t == llama_enc.eos_id:
@@ -143,10 +143,9 @@ async def chat_completions(
             for delta_contents in indexed_delta_contents
         )
         def combine_tokens(delta_contents):
-            # FIXME: there is still problem with the whitespace
             assert response_model.startswith("llama-2-"), f"Model {response_model} is not supported."
             print("delta_content", delta_contents)
-            return llama_enc.decode(sum([llama_enc.encode(dc, False, False) for dc in delta_contents if dc], []))
+            return llama_enc.sp_model.decode([dc for dc in delta_contents if dc])
         return schemas.ChatCompletionResponse(
             id=response_id,
             created=response_created,
