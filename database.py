@@ -5,7 +5,10 @@ from sqlalchemy.orm import sessionmaker
 SQLALCHEMY_DATABASE_URL = "sqlite:///./state.sqlite"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}  # arg for sqlite
+    SQLALCHEMY_DATABASE_URL,
+    pool_size=8,
+    max_overflow=256,
+    connect_args={"check_same_thread": False},  # arg for sqlite
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

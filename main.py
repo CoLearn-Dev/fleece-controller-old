@@ -60,7 +60,7 @@ def deregister_worker(w_id: Annotated[str, Depends(get_current_worker_id)], db: 
 
 receiver_queues: Dict[str, asyncio.Queue] = {}
 
-def build_chat_session_receiver(db_chat_session: models.ChatSession) -> AsyncGenerator[schemas.ChatCompletionResponseStreamChoice, None]:
+def build_chat_session_receiver(db: Session, db_chat_session: models.ChatSession) -> AsyncGenerator[schemas.ChatCompletionResponseStreamChoice, None]:
     q = receiver_queues[db_chat_session.c_id] = asyncio.Queue()
     assert db_chat_session.model.startswith("llama-2-"), f"Model {db_chat_session.model} is not supported."
     async def ret():
@@ -89,10 +89,11 @@ def build_chat_session_receiver(db_chat_session: models.ChatSession) -> AsyncGen
             q.task_done()
             # TODO: update db
             if all(fullfilled):
+                db_chat_session.status = "completed"
+                db.commit()
                 receiver_queues.pop(db_chat_session.c_id)
                 break
     return ret()
-
 
 def terminate_chat_session(db_chat_session: models.ChatSession):
     raise NotImplementedError  # TODO
@@ -111,7 +112,7 @@ async def chat_completions(
     response_id = db_chat_session.c_id
     response_created = round(db_chat_session.created_at.timestamp())
     response_model = request.model
-    response_generator = build_chat_session_receiver(db_chat_session)
+    response_generator = build_chat_session_receiver(db, db_chat_session)
     if request.stream:
         async def completion_stream_generator() -> AsyncGenerator[str, None]:
             async for c in response_generator:

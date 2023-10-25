@@ -47,4 +47,7 @@ def create_task_progress(db: Session, w_id: str, task_update: schemas.TaskUpdate
     db.add(db_task_progress)
     db.commit()
     db.refresh(db_task_progress)
+    db_task_progress.from_t.plan_current_step = task_update.plan_current_step
+    db_task_progress.from_t.plan_current_round = task_update.plan_current_round
+    db.commit()
     return db_task_progress
