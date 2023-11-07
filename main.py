@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import multiprocessing
-from typing import Annotated, AsyncGenerator, Dict
+from typing import Annotated, AsyncGenerator, Dict, List
 from datetime import datetime, timedelta
 from fastapi import Depends, FastAPI, HTTPException, Header, Request
 from fastapi.responses import StreamingResponse
@@ -59,21 +59,22 @@ def deregister_worker(w_id: Annotated[str, Depends(get_current_worker_id)], db: 
     crud.deregister_worker(db, w_id)
 
 receiver_queues: Dict[str, asyncio.Queue] = {}
+fulfilled: Dict[str, List[bool]] = {}
 
-def build_chat_session_receiver(db: Session, db_chat_session: models.ChatSession) -> AsyncGenerator[schemas.ChatCompletionResponseStreamChoice, None]:
-    q = receiver_queues[db_chat_session.c_id] = asyncio.Queue()
-    assert db_chat_session.model.startswith("llama-2-"), f"Model {db_chat_session.model} is not supported."
+def build_chat_session_receiver(c_id, model, n) -> AsyncGenerator[schemas.ChatCompletionResponseStreamChoice, None]:
+    q = receiver_queues[c_id] = asyncio.Queue()
+    fulfilled[c_id] = [False] * n
+    assert model.startswith("llama-2-"), f"Model {model} is not supported."
     async def ret():
-        for i in range(db_chat_session.n):
+        for i in range(n):
             yield schemas.ChatCompletionResponseStreamChoice(
                 index=i,
                 delta=schemas.DeltaMessage(role="assistant"),
             )
         while True:
-            fullfilled = [False] * db_chat_session.n
-            output_tokens = await q.get()  # TODO: check if there are ordering issues
+            (output_tokens, fulfilled_nw) = await q.get()  # TODO: check if there are ordering issues
             for i, t in enumerate(output_tokens):
-                if fullfilled[i]:
+                if fulfilled_nw[i]:
                     continue
                 yield schemas.ChatCompletionResponseStreamChoice(
                     index=i,
@@ -81,17 +82,12 @@ def build_chat_session_receiver(db: Session, db_chat_session: models.ChatSession
                     finish_reason=None,
                 )
                 if t == llama_enc.eos_id:
-                    fullfilled[i] = True
                     yield schemas.ChatCompletionResponseStreamChoice(
                         index=i,
                         finish_reason="stop",
                     )
             q.task_done()
-            # TODO: update db
-            if all(fullfilled):
-                db_chat_session.status = "completed"
-                db.commit()
-                receiver_queues.pop(db_chat_session.c_id)
+            if all(fulfilled_nw):
                 break
     return ret()
 
@@ -112,7 +108,8 @@ async def chat_completions(
     response_id = db_chat_session.c_id
     response_created = round(db_chat_session.created_at.timestamp())
     response_model = request.model
-    response_generator = build_chat_session_receiver(db, db_chat_session)
+    response_generator = build_chat_session_receiver(db_chat_session.c_id, request.model, db_chat_session.n)
+    del db  # explicitly releasing the handle
     if request.stream:
         async def completion_stream_generator() -> AsyncGenerator[str, None]:
             async for c in response_generator:
@@ -171,8 +168,20 @@ def update_task(task_update: schemas.TaskUpdate, w_id: Annotated[str, Depends(ge
     db_task_progress = crud.create_task_progress(db, w_id, task_update)
     # TODO check output_status to see if any errs
     if task_update.output_tokens:
-        receiver_queues[db_task_progress.from_t.from_c_id].put_nowait(task_update.output_tokens)
-    
+        output_tokens = task_update.output_tokens
+        c_id = db_task_progress.from_t.from_c_id
+        for i, t in enumerate(output_tokens):
+            if fulfilled[c_id][i]:
+                continue
+            if t == llama_enc.eos_id:
+                fulfilled[c_id][i] = True
+        receiver_queues[c_id].put_nowait((output_tokens, fulfilled[c_id]))
+        if all(fulfilled[c_id]):
+            db_task_progress.from_t.status = "completed"
+            db_task_progress.from_t.from_c.status = "completed"
+            db.commit()
+            receiver_queues.pop(c_id)
+            fulfilled.pop(c_id)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

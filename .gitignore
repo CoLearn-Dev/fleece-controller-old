@@ -3,7 +3,7 @@ llama/tokenizer.model
 openai_secret.py
 
 # File generated from running the command
-state.sqlite
+state*.sqlite
 
 # Example file for dev purpose
 example.json
