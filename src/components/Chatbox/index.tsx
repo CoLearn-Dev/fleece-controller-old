@@ -79,7 +79,7 @@ const ChatBox: React.FC = () => {
             </Tag>
             <Space.Compact style={{ width: '100%' }}>
                 <Input placeholder="Enter your prompt here..." onChange={(e) => setPrompt(e.target.value)} value={prompt} onPressEnter={(e) => sendMsg()} disabled={isRunning}/>
-                <Button type="primary" onClick={(e) => sendMsg()} >Send</Button>
+                <Button type="primary" onClick={(e) => sendMsg()} disabled={isRunning}>Send</Button>
             </Space.Compact>
         </Card>
     )

@@ -7,17 +7,23 @@ import Cover from './fleece.png'
 
 const Home: React.FC = () => {
   const [dataSource, setDataSource] = useState<Array<{ w_id: string, worker_url: string, created_at: string }>>([]);
+  const [worker_err, setWorkerErr] = useState<string>('');
   useEffect(() => {
     let interval = setInterval(() => {
-      try {
-        fetch('http://localhost:8000/list_workers').then((res) => res.json()).then((data) => {
-          setDataSource(data);
-        });
-      } catch (e) {
+      const HTTP_TIMEOUT = 1000;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), HTTP_TIMEOUT);
+      fetch('http://localhost:8000/list_workers', { signal: controller.signal }).then((res) => res.json()).then((data) => {
+        setDataSource(data);
+        setWorkerErr('[connected]');
+      }).catch((e) => {
         console.log(e);
-      }
+        setWorkerErr("[disconnected]");
+      }).finally(() => {
+        clearTimeout(timeoutId);
+      });
     }
-    , 500);
+      , 500);
     return () => {
       clearInterval(interval);
     };
@@ -27,14 +33,18 @@ const Home: React.FC = () => {
       <Card cover={
         <img src={Cover} alt="Fleece" style={{ height: 300, objectFit: "cover", objectPosition: "0 30%" }} />
       } style={{ width: "50%", marginLeft: "25%" }}>
-        <h1> Welcome to Fleece Admin Page! </h1>
+        <h1> Welcome to <b style={{ color: '#FDB515' }}>Golden Fleece</b> Admin Page! </h1>
         Use this page to monitor Fleece network and interact with it.
       </Card>
       {/* <Card>TODO: provide some action items: check GH, run live demo, etc.</Card> */}
       <Card title="Interactive demo">
-        <ChatBox/>
+        <ChatBox />
       </Card>
-      <Card title="Worker monitoring">
+      <Card title={
+        <div>
+          Worker monitoring <b style={worker_err.includes("dis")? { color: "red"} : { color: "green" }}>{worker_err}</b>
+        </div>
+      }>
         <Table dataSource={dataSource} columns={[
           {
             'title': 'Worker ID',
@@ -47,7 +57,7 @@ const Home: React.FC = () => {
             'dataIndex': 'worker_url',
             'render': (v) => {
               return (<Tag icon={<CheckCircleOutlined />} color="success">
-                  {v}
+                {v}
               </Tag>)
             }
           },
