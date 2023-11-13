@@ -2,6 +2,8 @@
 
 This project is initialized with [Ant Design Pro](https://pro.ant.design). Follow is the quick guide for how to use.
 
+Quick note: `nvm use 16`
+
 ## Environment Prepare
 
 Install `node_modules`:
@@ -25,7 +27,7 @@ Scripts provided in `package.json`. It's safe to modify or add additional script
 ### Start project
 
 ```bash
-npm start
+PORT=7999 npm start
 ```
 
 ### Build project
