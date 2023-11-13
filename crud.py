@@ -23,6 +23,9 @@ def deregister_worker(db: Session, w_id: str):
     db.commit()
     return db_worker
 
+def list_workers(db: Session):
+    return db.query(models.Worker).all()
+
 def create_chat_session(db: Session, chat_session: schemas.ChatCompletionRequest) -> models.ChatSession:
     db_chat_session = models.ChatSession(
         c_id=uuid4().hex,

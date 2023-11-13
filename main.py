@@ -5,6 +5,7 @@ from typing import Annotated, AsyncGenerator, Dict, List
 from datetime import datetime, timedelta
 from fastapi import Depends, FastAPI, HTTPException, Header, Request
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 import tiktoken
@@ -19,6 +20,19 @@ llama_enc = Tokenizer("./llama/tokenizer.model")
 openai_enc = tiktoken.get_encoding("cl100k_base")
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:7999",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Scheduler Process
 scheduler_q = multiprocessing.Queue()
@@ -58,6 +72,10 @@ def register_worker(worker: schemas.WorkerRegister, db: Session = Depends(get_db
 def deregister_worker(w_id: Annotated[str, Depends(get_current_worker_id)], db: Session = Depends(get_db)):
     crud.deregister_worker(db, w_id)
 
+@app.get("/list_workers", response_model=List[schemas.Worker])
+def list_workers(db: Session = Depends(get_db)):
+    return [schemas.Worker(w_id=db_worker.w_id, worker_url=db_worker.worker_url, created_at=round(db_worker.created_at.timestamp())) for db_worker in crud.list_workers(db)]
+
 receiver_queues: Dict[str, asyncio.Queue] = {}
 fulfilled: Dict[str, List[bool]] = {}
 
@@ -76,9 +94,10 @@ def build_chat_session_receiver(c_id, model, n) -> AsyncGenerator[schemas.ChatCo
             for i, t in enumerate(output_tokens):
                 if fulfilled_nw[i]:
                     continue
+                current_piece = llama_enc.sp_model.id_to_piece(t)
                 yield schemas.ChatCompletionResponseStreamChoice(
                     index=i,
-                    delta=schemas.DeltaMessage(content=llama_enc.sp_model.id_to_piece(t)),
+                    delta=schemas.DeltaMessage(content=f"[{t}]{current_piece}"),
                     finish_reason=None,
                 )
                 if t == llama_enc.eos_id:
@@ -184,8 +203,9 @@ def update_task(task_update: schemas.TaskUpdate, w_id: Annotated[str, Depends(ge
             fulfilled.pop(c_id)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    scheduler_p.start()
+    # logging.basicConfig(level=logging.DEBUG)
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    logging.basicConfig(level=logging.CRITICAL)
+    scheduler_p.start()
+    uvicorn.run(app, host="0.0.0.0", port=8000, access_log=False)
     scheduler_p.join()

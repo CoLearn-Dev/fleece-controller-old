@@ -8,6 +8,11 @@ class WorkerRegister(BaseModel):
 class WorkerToken(BaseModel):
     access_token: str
 
+class Worker(BaseModel):
+    w_id: str
+    worker_url: str
+    created_at: int
+
 class ChatMessage(BaseModel):
     role: str
     content: str
