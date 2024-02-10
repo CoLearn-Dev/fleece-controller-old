@@ -49,6 +49,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
     "@ant-design/pro-components": "1.1.1",
+    "@ant-design/pro-layout": "6.35.0",
     "@umijs/route-utils": "^2.0.0",
     "antd": "^4.20.0",
     "antd-v5": "npm:antd@5",
