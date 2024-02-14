@@ -12,7 +12,7 @@ const Settings: LayoutSettings & {
   fixedHeader: false,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'Fleece Admin',
+  title: 'FleeceServe',
   splitMenus: false,
   footerRender: false,
   pwa: false,

@@ -8,7 +8,9 @@ import styles from './index.less';
 export type SiderTheme = 'light' | 'dark';
 const GlobalHeaderRight: React.FC = () => {
   // disable right content
-  return null;
+
+  // return null;
+  
   const { initialState } = useModel('@@initialState');
   if (!initialState || !initialState.settings) {
     return null;
@@ -20,7 +22,7 @@ const GlobalHeaderRight: React.FC = () => {
   }
   return (
     <Space className={className}>
-      <HeaderSearch
+      {/* <HeaderSearch
         className={`${styles.action} ${styles.search}`}
         placeholder="站内搜索"
         defaultValue="umi ui"
@@ -45,7 +47,7 @@ const GlobalHeaderRight: React.FC = () => {
         // onSearch={value => {
         //   console.log('input', value);
         // }}
-      />
+      /> 
       <span
         className={styles.action}
         onClick={() => {
@@ -53,7 +55,7 @@ const GlobalHeaderRight: React.FC = () => {
         }}
       >
         <QuestionCircleOutlined />
-      </span>
+      </span>*/}
       <Avatar />
     </Space>
   );

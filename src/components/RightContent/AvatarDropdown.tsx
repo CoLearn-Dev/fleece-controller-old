@@ -1,5 +1,5 @@
 import { outLogin } from '@/services/ant-design-pro/api';
-import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LoginOutlined, LogoutOutlined, SettingOutlined, UserOutlined, WalletOutlined } from '@ant-design/icons';
 import { Avatar, Menu, Spin } from 'antd';
 import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { stringify } from 'querystring';
@@ -37,9 +37,16 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
   const onMenuClick = useCallback(
     (event: MenuInfo) => {
       const { key } = event;
+      if (key === 'login') {
+        const url = "http://34.222.80.157:8080/oauth?code=test@colearn.dev";
+        window.location.href = url;
+        return;
+      }
       if (key === 'logout') {
-        setInitialState((s) => ({ ...s, currentUser: undefined }));
-        loginOut();
+        setInitialState((s) => ({ ...s, currentUser: {
+          email: 'Guest',
+          avatar: './icons8-who-100.png',
+        } }));
         return;
       }
       history.push(`/account/${key}`);
@@ -65,7 +72,8 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
 
   const { currentUser } = initialState;
 
-  if (!currentUser || !currentUser.name) {
+  if (!currentUser || !currentUser.email) {
+    console.log(currentUser);
     return loading;
   }
 
@@ -87,10 +95,22 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
           },
         ]
       : []),
+    ...(currentUser.email == "Guest" ? [
+      {
+        key: 'login',
+        icon: <LoginOutlined />,
+        label: 'Login',
+      },
+    ] : []),
+    {
+      key: 'credit',
+      icon: <WalletOutlined />,
+      label: 'My Credit',
+    },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: 'Logout',
     },
   ];
 
@@ -102,7 +122,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
     <HeaderDropdown overlay={menuHeaderDropdown}>
       <span className={`${styles.action} ${styles.account}`}>
         <Avatar size="small" className={styles.avatar} src={currentUser.avatar} alt="avatar" />
-        <span className={`${styles.name} anticon`}>{currentUser.name}</span>
+        <span className={`${styles.name} anticon`}>{currentUser.email ? currentUser.email : currentUser.name }</span>
       </span>
     </HeaderDropdown>
   );

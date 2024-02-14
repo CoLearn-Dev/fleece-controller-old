@@ -1,9 +1,11 @@
-import { Timeline, Tag } from "antd-v5";
+import { Avatar, Timeline, Tag, List } from "antd-v5";
 import { Space, Input, Button, Card, } from 'antd';
 import { CheckCircleOutlined, MessageOutlined } from '@ant-design/icons';
 import OpenAI from 'openai';
 import { useState } from 'react';
 import llamaTokenizer from 'llama-tokenizer-js'
+import { currentUser } from "@/services/ant-design-pro/api";
+import { history, useModel } from 'umi';
 
 const openai = new OpenAI({
     apiKey: 'empty',
@@ -12,6 +14,9 @@ const openai = new OpenAI({
 });
 
 const ChatBox: React.FC = () => {
+    const { initialState, setInitialState } = useModel('@@initialState');
+    const { currentUser } = initialState;
+
     const [prompt, setPrompt] = useState<string>('');
     const [items, setItems] = useState<Array<{ label: string, children: string }>>([]);
     const [isNewChat, setIsNewChat] = useState<boolean>(true);
@@ -68,12 +73,23 @@ const ChatBox: React.FC = () => {
                 <Tag color="orange">Chat</Tag>
             </Space>
         } bordered={true}>
-            <Timeline
-                mode="left"
-                pending={pending}
-                reverse={false}
-                items={items}
-            />
+            { pending ?
+                <Timeline
+                    mode="left"
+                    pending={pending}
+                    reverse={false}
+                    items={items}
+                /> 
+                : 
+                <List itemLayout="horizontal" dataSource={items} renderItem={(item, index) => (
+                    <List.Item>
+                        <List.Item.Meta  avatar={<Avatar src={item.label == "user" ? currentUser.avatar : "/static/fleece.e90710a5.png"} />}
+                            title={item.label} description={item.children} />
+                    </List.Item>
+                    )}
+                />
+            }
+            
             <Tag icon={<CheckCircleOutlined />} color={isRunning ? "processing":"success"} style={{ float: 'right', marginRight: 0 }}>
                 {tagText}
             </Tag>
