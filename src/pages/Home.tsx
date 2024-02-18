@@ -44,7 +44,7 @@ const Home: React.FC = () => {
             leveraging decentralized computing resources for the collective benefit.
           </Paragraph>
           <Space size="middle">
-            <Button type="primary">Try it now</Button>
+            <a href="/playground"><Button type="primary">Try it now</Button></a>
             <Button>Earn credits</Button>
             <Button>See docs</Button>
             <Button>Join Slack</Button>

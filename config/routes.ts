@@ -8,6 +8,7 @@ export default [
     ],
   },
   { path: '/', redirect: '/home' },
+  { path: "/login", hideInMenu: true, name: 'login', component: './Token'},
   { path: '/home', name: 'Home', icon: 'crown', component: './Home' },
   { path: '/playground', name: 'Playground', icon: 'playSquare', component: './Playground' },
   { path: '/network', name: 'Network', icon: 'desktop', component: './Network' },

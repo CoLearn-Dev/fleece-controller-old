@@ -18,9 +18,9 @@ export default defineConfig({
     ...defaultSettings,
   },
   // https://umijs.org/zh-CN/plugins/plugin-locale
-  dynamicImport: {
-    loading: '@ant-design/pro-layout/es/PageLoading',
-  },
+  // dynamicImport: {
+  //   loading: '@ant-design/pro-layout/es/PageLoading',
+  // },
   targets: {
     ie: 11,
   },
@@ -36,7 +36,9 @@ export default defineConfig({
   },
   // esbuild is father build tools
   // https://umijs.org/plugins/plugin-esbuild
-  esbuild: {},
+  esbuild: {
+    target: 'es2018',
+  },
   title: false,
   ignoreMomentLocale: true,
   proxy: proxy[REACT_APP_ENV || 'dev'],

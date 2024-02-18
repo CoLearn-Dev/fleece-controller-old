@@ -16,7 +16,7 @@ const Settings: LayoutSettings & {
   splitMenus: false,
   footerRender: false,
   pwa: false,
-  logo: 'https://avatars.githubusercontent.com/u/101970052?s=200&v=4',
+  logo: '/fleece-load.png',
   iconfontUrl: '',
 };
 

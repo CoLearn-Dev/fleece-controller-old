@@ -7,10 +7,11 @@ import { sha256 } from 'js-sha256'
 export async function currentUser(options?: { [key: string]: any }) {
   // first, try to make request to url using the existing cookie
   const url = "http://34.222.80.157:8080/get_user";
-  // 
+
   // try fetch
   try {
-    const response = await fetch(url, { credentials: 'include' });
+    // throw new Error('Network response was not ok.');  // TODO: temporary for testing without backend
+    const response = await fetch(url, { credentials: 'include', headers: { 'api-token': localStorage.getItem('token') },});
     console.log(response);
     if (response.ok) {
       const data = await response.json();
