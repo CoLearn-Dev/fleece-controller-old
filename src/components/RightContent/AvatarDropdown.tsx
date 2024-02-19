@@ -20,7 +20,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
     (event: MenuInfo) => {
       const { key } = event;
       if (key === 'login') {
-        const url = "http://34.222.80.157:8080/oauth?code=test@colearn.dev";
+        const url = "https://serving-api.colearn.cloud:8443/oauth?code=test@colearn.dev";
         window.location.href = url;
         return;
       }
@@ -28,7 +28,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
         localStorage.removeItem('token');
         setInitialState((s) => ({ ...s, currentUser: {
           email: 'Guest',
-          avatar: './icons8-who-100.png',
+          avatar: '/icons8-who-100.png',
         } }));
         window.location.reload();
         return;

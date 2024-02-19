@@ -15,7 +15,7 @@ const Playground: React.FC = () => {
   const { currentUser } = initialState;
 
   const api_key = currentUser.api_token ? currentUser.api_token : "<Please login first to get API token>";
-  const credit_api_url = "http://34.222.80.157:8080/get_remaining_credit";
+  const credit_api_url = "https://serving-api.colearn.cloud:8443/get_remaining_credit";
   if (currentUser.api_token) {
     fetch(credit_api_url, { headers: { 'api-token': currentUser.api_token } })
       .then(response => response.json())

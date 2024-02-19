@@ -46,7 +46,7 @@ export default {
       success: true,
       data: {
         name: 'Guest',
-        avatar: './icons8-who-100.png',
+        avatar: '/icons8-who-100.png',
         userid: '00000001',
         email: 'antdesign@alipay.com',
         signature: '海纳百川，有容乃大',

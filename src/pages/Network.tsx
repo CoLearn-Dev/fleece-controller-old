@@ -17,7 +17,7 @@ const Network: React.FC = () => {
       const HTTP_TIMEOUT = 1000;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), HTTP_TIMEOUT);
-      const worker_list_api_url = "http://34.222.80.157:8080/get_worker_list";
+      const worker_list_api_url = "https://serving-api.colearn.cloud:8443/get_worker_list";
       fetch(worker_list_api_url, { signal: controller.signal, headers: { 'api-token': currentUser.api_token } }).then((res) => res.json()).then((data) => {
         console.log("123", data);
         // align the format

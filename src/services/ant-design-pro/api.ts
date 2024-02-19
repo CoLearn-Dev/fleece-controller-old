@@ -6,7 +6,7 @@ import { sha256 } from 'js-sha256'
 /** 获取当前的用户 GET /api/currentUser */
 export async function currentUser(options?: { [key: string]: any }) {
   // first, try to make request to url using the existing cookie
-  const url = "http://34.222.80.157:8080/get_user";
+  const url = "https://serving-api.colearn.cloud:8443/get_user";
 
   // try fetch
   try {
@@ -29,7 +29,7 @@ export async function currentUser(options?: { [key: string]: any }) {
   catch (e) {
     return {
       email: 'Guest',
-      avatar: './icons8-who-100.png',
+      avatar: '/icons8-who-100.png',
     }
     // return request<{
     //   data: API.CurrentUser;
