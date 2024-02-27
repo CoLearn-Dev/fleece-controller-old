@@ -8,23 +8,28 @@ export default [
     ],
   },
   { path: '/', redirect: '/home' },
-  { path: "/login", hideInMenu: true, name: 'login', component: './Token'},
+  { path: '/login', hideInMenu: true, name: 'login', component: './Token' },
   { path: '/home', name: 'Home', icon: 'crown', component: './Home' },
-  { path: '/playground', name: 'Playground', icon: 'playSquare', component: './Playground' },
   { path: '/network', name: 'Network', icon: 'desktop', component: './Network' },
-  { path: '/scheduler', name: 'Scheduler', icon: 'cluster', component: "./Scheduler" },
-  { path: '/docs', name: 'Docs', icon: 'read', children: [
-    {
-      path: "/docs/getting_started",
-      name: "Get Started",
-      // icon: "star"
-    },
-    {
-      path: "/docs/private_ent",
-      name: "Self-host Private Network",
-      // icon: "cluster"
-    }
-  ]},
+  { path: '/playground', name: 'Playground', icon: 'playSquare', component: './Playground' },
+  { path: '/scheduler', name: 'Scheduler', icon: 'cluster', component: './Scheduler' },
+  {
+    path: '/docs',
+    name: 'Docs',
+    icon: 'read',
+    children: [
+      {
+        path: '/docs/getting_started',
+        name: 'Get Started',
+        // icon: "star"
+      },
+      {
+        path: '/docs/private_ent',
+        name: 'Self-host Private Network',
+        // icon: "cluster"
+      },
+    ],
+  },
   // { path: '/controller', name: 'Controller', icon: 'cluster', component: './Controller' },
   // { path: '/worker', name: 'Worker', icon: 'desktop' },
   // { path: '/simulator', name: 'Simulator', icon: 'experiment' },
