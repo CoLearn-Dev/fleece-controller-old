@@ -7,8 +7,10 @@ export default [
       { component: './404' },
     ],
   },
+  { path: '/account/credit', hideInMenu: true, name: 'Credit', component: './Credit' },
+
   { path: '/', redirect: '/home' },
-  { path: '/login', hideInMenu: true, name: 'login', component: './Token' },
+  { path: '/login', hideInMenu: true, name: 'Login', component: './Token' },
   { path: '/home', name: 'Home', icon: 'crown', component: './Home' },
   { path: '/network', name: 'Network', icon: 'desktop', component: './Network' },
   { path: '/playground', name: 'Playground', icon: 'playSquare', component: './Playground' },

@@ -1,17 +1,18 @@
 // @ts-ignore
 /* eslint-disable */
 import { request } from 'umi';
-import { sha256 } from 'js-sha256'
+import { sha256 } from 'js-sha256';
 
 /** 获取当前的用户 GET /api/currentUser */
 export async function currentUser(options?: { [key: string]: any }) {
   // first, try to make request to url using the existing cookie
-  const url = "https://serving-api.colearn.cloud:8443/get_user";
-
-  // try fetch
   try {
     // throw new Error('Network response was not ok.');  // TODO: temporary for testing without backend
-    const response = await fetch(url, { credentials: 'include', headers: { 'api-token': localStorage.getItem('token') },});
+    const user_url = 'https://serving-api.colearn.cloud:8443/get_user';
+
+    const response = await fetch(user_url, {
+      headers: { 'api-token': localStorage.getItem('token') },
+    });
     console.log(response);
     if (response.ok) {
       const data = await response.json();
@@ -19,18 +20,16 @@ export async function currentUser(options?: { [key: string]: any }) {
       const address = String(email).trim().toLowerCase();
       const hash = sha256(address);
       data.avatar = `https://www.gravatar.com/avatar/${hash}`;
-      console.log("user loaded");
       console.log(data);
       return data;
     } else {
       throw new Error('Network response was not ok.');
     }
-  }
-  catch (e) {
+  } catch (e) {
     return {
       email: 'Guest',
       avatar: '/icons8-who-100.png',
-    }
+    };
     // return request<{
     //   data: API.CurrentUser;
     // }>('/api/currentUser', {

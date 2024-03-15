@@ -26,7 +26,6 @@ const Network: React.FC = () => {
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log('1234', data);
           // align the format
           data = data.workers.map((item: any) => {
             return {

@@ -2,6 +2,7 @@ import { Badge, Card, Col, Descriptions, Divider, Progress, Row } from 'antd-v5'
 import React from 'react';
 import ChatBox from '@/components/Chatbox';
 import Circuit from '@/components/Circuit';
+import CreditProgress from '@/components/CreditProgress';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { a11yLight, a11yDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { history, useModel } from 'umi';
@@ -75,16 +76,7 @@ print(chat_completion)\
     {
       key: '2',
       label: 'Your remaining credit',
-      children: (
-        <Progress
-          percent={Math.min(Math.log(credit + 1) / Math.log(1.1), 100)}
-          format={() => credit + ` fleece tokens`}
-          size="small"
-          style={{ width: 200 }}
-          status="active"
-          strokeColor={{ from: '#fd5315', to: '#FDB515' }}
-        />
-      ),
+      children: <CreditProgress credit={credit} width={200} size="small" type="line" />,
     },
     {
       key: '3',
