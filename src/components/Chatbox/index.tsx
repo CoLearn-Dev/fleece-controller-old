@@ -7,7 +7,7 @@ import llamaTokenizer from 'llama-tokenizer-js';
 import { currentUser } from '@/services/ant-design-pro/api';
 import { history, useModel } from 'umi';
 
-const ChatBox: React.FC = ({ setChatId }) => {
+const ChatBox: React.FC = ({ setChatId, currentModel }) => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState;
 
@@ -40,7 +40,7 @@ const ChatBox: React.FC = ({ setChatId }) => {
       dangerouslyAllowBrowser: true,
     });
     const stream = await openai.chat.completions.create({
-      model: 'llama-2-7b-chat',
+      model: currentModel,
       messages: messages,
       stream: true,
     });
@@ -76,9 +76,7 @@ const ChatBox: React.FC = ({ setChatId }) => {
         <Space>
           <MessageOutlined />
           Chat with Fleece backend
-          <Tag color="blue">Llama-2</Tag>
-          <Tag color="green">7b</Tag>
-          <Tag color="orange">Chat</Tag>
+          <Tag color="blue">{currentModel}</Tag>
         </Space>
       }
       bordered={true}

@@ -1,4 +1,4 @@
-import { Badge, Card, Col, Descriptions, Divider, Progress, Row } from 'antd-v5';
+import { Badge, Card, Col, Descriptions, Divider, Progress, Row, Select } from 'antd-v5';
 import React from 'react';
 import ChatBox from '@/components/Chatbox';
 import Circuit from '@/components/Circuit';
@@ -11,6 +11,23 @@ import { useEffect, useState } from 'react';
 const Playground: React.FC = () => {
   const [credit, setCredit] = useState<number>(0);
   const [chatId, setChatId] = useState<string>('');
+  const [modelOptions, setModelOptions] = useState<any[]>([
+    {
+      label: <span> LLaMA </span>,
+      title: 'llama',
+      options: [
+        { label: <span> llama-2-7b-chat </span>, value: 'llama-2-7b-chat' },
+        { label: <span> llama-2-13b-chat </span>, value: 'llama-2-13b-chat' },
+        { label: <span> llama-2-70b-chat </span>, value: 'llama-2-70b-chat' },
+      ],
+    },
+    {
+      label: <span> Others </span>,
+      title: 'others',
+      options: [{ label: <span> dummy </span>, value: 'dummy' }],
+    },
+  ]);
+  const [currentModel, setCurrentModel] = useState<string>('llama-2-7b-chat');
 
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState;
@@ -28,45 +45,7 @@ const Playground: React.FC = () => {
   }
 
   const api_endpoint = 'https://serving-api.colearn.cloud:9000/v1';
-  const bashCodeString =
-    `\
-curl ` +
-    api_endpoint +
-    `/chat/completions \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer ` +
-    api_key +
-    `" \\
-  -d '{
-    "model": "llama-2-7b-chat",
-    "messages": [{"role": "user", "content": "Hello world!"}]
-  }'\
-   `;
-  const pythonCodeString =
-    `\
-from openai import OpenAI
 
-client = OpenAI(
-    api_key="` +
-    api_key +
-    `",
-    base_url="` +
-    api_endpoint +
-    `",
-)
-
-chat_completion = client.chat.completions.create(
-    messages=[
-        {
-            "role": "user",
-            "content": "Hello world!",
-        }
-    ],
-    model="llama-2-7b-chat",
-)
-
-print(chat_completion)\
-  `;
   var api_items = [
     {
       key: '1',
@@ -116,6 +95,47 @@ print(chat_completion)\
           <a style={{ color: '#FDB515' }}> Chatbox demo </a>
           for trying out our serving sytem.
         </p>
+        <p>
+          <b>Model to try out</b>: &nbsp;
+          <Select
+            showSearch
+            size="large"
+            defaultValue={currentModel}
+            value={currentModel}
+            placeholder="Select a model"
+            optionFilterProp="children"
+            onInputKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                let mo = modelOptions;
+                let v = e.target.value;
+                // check if the option exists
+                let found = false;
+                for (let i = 0; i < mo.length; i++) {
+                  for (let j = 0; j < mo[i].options.length; j++) {
+                    if (mo[i].options[j].value === v) {
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+                if (!found) {
+                  mo[mo.length - 1].options.push({ label: <span> {v} </span>, value: v });
+                  setModelOptions(mo);
+                  console.log('mo', mo);
+                }
+                console.log('v', v);
+                setCurrentModel(v);
+              }
+            }}
+            style={{ width: '100%' }}
+            notFoundContent={<span> Custom model name? Press enter to confirm. </span>}
+            onChange={(value) => {
+              setCurrentModel(value);
+            }}
+            // filterOption={filterOption}
+            options={modelOptions}
+          />
+        </p>
       </Card>
       <br />
       <Card>
@@ -125,7 +145,20 @@ print(chat_completion)\
         <Divider />
         <h3> Try it in your terminal: </h3>
         <SyntaxHighlighter language="bash" style={a11yDark}>
-          {bashCodeString}
+          {`curl ` +
+            api_endpoint +
+            `/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ` +
+            api_key +
+            `" \\
+  -d '{
+    "model": ` +
+            currentModel +
+            `,
+    "messages": [{"role": "user", "content": "Hello world!"}]
+  }'\
+`}
         </SyntaxHighlighter>
         <Divider />
         <h3>
@@ -133,7 +166,32 @@ print(chat_completion)\
           Try it with <a href="https://pypi.org/project/openai/">Python OpenAI package</a>:{' '}
         </h3>
         <SyntaxHighlighter language="python" style={a11yDark}>
-          {pythonCodeString}
+          {`\
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="` +
+            api_key +
+            `",
+    base_url="` +
+            api_endpoint +
+            `",
+)
+
+chat_completion = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content": "Hello world!",
+        }
+    ],
+    model="` +
+            currentModel +
+            `",
+)
+
+print(chat_completion)\
+  `}
         </SyntaxHighlighter>
       </Card>
 
@@ -143,7 +201,7 @@ print(chat_completion)\
         <h1> Chatbot demo </h1>
         <Row>
           <Col span={14}>
-            <ChatBox setChatId={setChatId} />
+            <ChatBox setChatId={setChatId} currentModel={currentModel} />
           </Col>
           <Col span={1}></Col>
           <Col span={9}>
