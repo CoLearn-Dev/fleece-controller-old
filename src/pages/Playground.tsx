@@ -153,9 +153,9 @@ const Playground: React.FC = () => {
             api_key +
             `" \\
   -d '{
-    "model": ` +
+    "model": "` +
             currentModel +
-            `,
+            `",
     "messages": [{"role": "user", "content": "Hello world!"}]
   }'\
 `}
